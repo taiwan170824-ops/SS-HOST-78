@@ -1,0 +1,16 @@
+services:
+  - type: web
+    name: bothost
+    env: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn app:app --bind 0.0.0.0:$PORT --workers 1 --threads 4 --timeout 120
+    envVars:
+      - key: ADMIN_PASSWORD
+        generateValue: false
+        value: "changeme123"   # ← Change this!
+      - key: SECRET_KEY
+        generateValue: true
+    disk:
+      name: bothost-data
+      mountPath: /opt/render/project/src/bots_data
+      sizeGB: 1
