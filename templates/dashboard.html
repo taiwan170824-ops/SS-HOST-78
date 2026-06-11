@@ -1,0 +1,1367 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NexusBot — Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#060a12;--surface:#0c1220;--surface2:#111927;--surface3:#151f2e;
+  --border:#1a2840;--border-h:#263c5a;
+  --accent:#5865f2;--accent-h:#7c8bf7;--accent-glow:rgba(88,101,242,.3);
+  --accent2:#00d4aa;--accent2-dim:rgba(0,212,170,.15);
+  --green:#22c55e;--green-dim:rgba(34,197,94,.15);
+  --red:#f04747;--red-dim:rgba(240,71,71,.12);
+  --yellow:#f59e0b;--yellow-dim:rgba(245,158,11,.12);
+  --blue:#3b82f6;--blue-dim:rgba(59,130,246,.12);
+  --text:#e8eef8;--muted:#6b7fa3;--muted2:#3d4f6b;--muted3:#1e2d45;
+  --font:'Inter',sans-serif;--mono:'JetBrains Mono',monospace;
+  --sidebar:240px;--topbar:58px;
+}
+html,body{height:100%;overflow:hidden}
+body{background:var(--bg);color:var(--text);font-family:var(--font);display:flex}
+
+/* ── Scrollbar ── */
+::-webkit-scrollbar{width:5px;height:5px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--border-h);border-radius:4px}
+
+/* ═══════════════════════════ SIDEBAR ═══════════════════════════ */
+.sidebar{width:var(--sidebar);background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;height:100vh;flex-shrink:0;overflow:hidden;position:relative;z-index:20}
+.sidebar::after{content:'';position:absolute;top:0;right:0;width:1px;height:100%;background:linear-gradient(180deg,transparent,var(--accent-glow),transparent);opacity:.5}
+
+.sb-logo{padding:0 1rem;height:var(--topbar);display:flex;align-items:center;gap:.75rem;border-bottom:1px solid var(--border);flex-shrink:0}
+.sb-logo-icon{width:34px;height:34px;background:linear-gradient(135deg,var(--accent),#7c3aed);border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;box-shadow:0 0 16px var(--accent-glow)}
+.sb-logo-text{font-size:.92rem;font-weight:800;letter-spacing:-.03em;background:linear-gradient(135deg,#fff,var(--accent-h));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.sb-logo-badge{font-size:.6rem;background:var(--accent);color:#fff;padding:.1rem .4rem;border-radius:99px;font-weight:700;letter-spacing:.02em;margin-left:.25rem}
+
+.sb-section{padding:.9rem .9rem .3rem;font-size:.63rem;font-weight:700;color:var(--muted2);letter-spacing:.1em;text-transform:uppercase}
+
+.sb-bots{flex:1;overflow-y:auto;padding:.25rem .5rem}
+.sb-bot{display:flex;align-items:center;gap:.6rem;padding:.55rem .65rem;border-radius:8px;cursor:pointer;transition:background .15s,transform .1s;margin-bottom:2px;position:relative}
+.sb-bot:hover{background:var(--surface2)}
+.sb-bot.active{background:rgba(88,101,242,.12)}
+.sb-bot.active::before{content:'';position:absolute;left:0;top:20%;bottom:20%;width:2px;border-radius:0 2px 2px 0;background:var(--accent)}
+.sb-bot-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+.sb-bot-dot.running{background:var(--green);box-shadow:0 0 6px rgba(34,197,94,.5);animation:dotPulse 2s ease-in-out infinite}
+.sb-bot-dot.stopped{background:var(--muted2)}
+@keyframes dotPulse{0%,100%{opacity:1;box-shadow:0 0 6px rgba(34,197,94,.5)}50%{opacity:.6;box-shadow:0 0 10px rgba(34,197,94,.8)}}
+.sb-bot-name{font-size:.8rem;font-weight:500;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sb-bot-status{font-size:.62rem;color:var(--muted2)}
+
+.sb-footer{padding:.75rem .75rem;border-top:1px solid var(--border);display:flex;flex-direction:column;gap:.4rem}
+.sb-add-btn{width:100%;background:linear-gradient(135deg,var(--accent),#7c3aed);color:#fff;border:none;border-radius:8px;padding:.6rem;font-size:.8rem;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:.4rem;transition:opacity .2s,transform .1s;position:relative;overflow:hidden}
+.sb-add-btn::before{content:'';position:absolute;inset:0;background:linear-gradient(135deg,rgba(255,255,255,.1),transparent 60%)}
+.sb-add-btn:hover{opacity:.9;transform:translateY(-1px)}
+.sb-logout{width:100%;background:transparent;color:var(--muted);border:1px solid var(--border);border-radius:7px;padding:.5rem;font-size:.75rem;font-weight:500;cursor:pointer;transition:all .15s;display:flex;align-items:center;justify-content:center;gap:.4rem}
+.sb-logout:hover{color:var(--red);border-color:var(--red)}
+
+/* ═══════════════════════════ MAIN ═══════════════════════════ */
+.main{flex:1;display:flex;flex-direction:column;height:100vh;overflow:hidden}
+
+/* ── Topbar ── */
+.topbar{height:var(--topbar);background:var(--surface);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:0 1.5rem;flex-shrink:0}
+.topbar-left{display:flex;align-items:center;gap:.75rem}
+.topbar-title{font-size:.95rem;font-weight:700}
+.topbar-breadcrumb{display:flex;align-items:center;gap:.4rem;font-size:.8rem;color:var(--muted)}
+.topbar-breadcrumb .sep{color:var(--muted2)}
+.topbar-breadcrumb .current{color:var(--text);font-weight:600}
+.topbar-right{display:flex;align-items:center;gap:.6rem}
+.top-badge{display:inline-flex;align-items:center;gap:.35rem;padding:.28rem .7rem;border-radius:99px;font-size:.7rem;font-weight:600}
+.top-badge.green{background:var(--green-dim);color:var(--green)}
+.top-badge.muted{background:var(--surface2);color:var(--muted);border:1px solid var(--border)}
+.btn-add{background:linear-gradient(135deg,var(--accent),#7c3aed);color:#fff;border:none;border-radius:8px;padding:.45rem 1rem;font-size:.78rem;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:.35rem;transition:opacity .2s,transform .1s;position:relative;overflow:hidden}
+.btn-add::before{content:'';position:absolute;inset:0;background:linear-gradient(135deg,rgba(255,255,255,.12),transparent 60%)}
+.btn-add:hover{opacity:.9;transform:translateY(-1px)}
+
+/* ── Views ── */
+.views{flex:1;overflow:hidden;position:relative}
+.view{display:none;height:100%;overflow-y:auto;padding:1.5rem}
+.view.active{display:block;animation:viewIn .25s ease}
+@keyframes viewIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+
+/* ── Dashboard overview ── */
+.stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:.75rem;margin-bottom:1.5rem}
+.stat-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:1rem 1.1rem;transition:border-color .2s,transform .2s}
+.stat-card:hover{border-color:var(--border-h);transform:translateY(-2px)}
+.stat-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:.5rem}
+.stat-label{font-size:.7rem;font-weight:600;color:var(--muted);letter-spacing:.06em;text-transform:uppercase}
+.stat-icon{font-size:1.1rem}
+.stat-value{font-size:1.8rem;font-weight:800;line-height:1;letter-spacing:-.03em}
+.stat-value.green{color:var(--green)}
+.stat-value.blue{color:var(--accent-h)}
+.stat-value.red{color:var(--red)}
+.stat-value.yellow{color:var(--yellow)}
+.stat-sub{font-size:.68rem;color:var(--muted2);margin-top:.25rem}
+
+/* ── Section header ── */
+.section-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:.9rem}
+.section-title{font-size:.82rem;font-weight:700;color:var(--muted);letter-spacing:.06em;text-transform:uppercase;display:flex;align-items:center;gap:.5rem}
+.section-title::before{content:'';width:3px;height:14px;border-radius:2px;background:var(--accent);display:inline-block}
+
+/* ── Bot cards (dashboard) ── */
+.bots-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:.9rem}
+.bot-card{background:var(--surface);border:1px solid var(--border);border-radius:14px;overflow:hidden;cursor:pointer;transition:border-color .2s,box-shadow .2s,transform .2s}
+.bot-card:hover{border-color:var(--border-h);box-shadow:0 8px 32px rgba(0,0,0,.4);transform:translateY(-3px)}
+.bot-card.running-card{border-color:rgba(34,197,94,.25)}
+.bot-card-stripe{height:3px;background:linear-gradient(90deg,var(--accent),transparent)}
+.bot-card.running-card .bot-card-stripe{background:linear-gradient(90deg,var(--green),transparent)}
+.bot-card-body{padding:1rem}
+.bc-header{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:.75rem}
+.bc-info{flex:1;min-width:0}
+.bc-name{font-size:.95rem;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:.2rem}
+.bc-id{font-size:.65rem;color:var(--muted2);font-family:var(--mono)}
+.bc-badge{display:inline-flex;align-items:center;gap:.3rem;padding:.22rem .55rem;border-radius:99px;font-size:.67rem;font-weight:700;flex-shrink:0}
+.bc-badge.running{background:var(--green-dim);color:var(--green)}
+.bc-badge.stopped{background:var(--surface2);color:var(--muted);border:1px solid var(--border)}
+.bc-badge .bdot{width:5px;height:5px;border-radius:50%;background:currentColor}
+.bc-badge.running .bdot{animation:dotPulse 2s ease-in-out infinite}
+.bc-token{font-family:var(--mono);font-size:.7rem;color:var(--muted2);background:var(--bg);padding:.3rem .6rem;border-radius:6px;margin-bottom:.85rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;border:1px solid var(--border)}
+.bc-actions{display:flex;gap:.35rem;flex-wrap:wrap}
+.bc-btn{border:none;border-radius:7px;padding:.38rem .7rem;font-size:.72rem;font-weight:600;display:inline-flex;align-items:center;gap:.3rem;cursor:pointer;transition:all .15s;font-family:var(--font)}
+.bc-btn.open{background:rgba(88,101,242,.15);color:var(--accent-h)}
+.bc-btn.open:hover{background:rgba(88,101,242,.25)}
+.bc-btn.start{background:var(--green-dim);color:var(--green)}
+.bc-btn.start:hover{background:rgba(34,197,94,.25)}
+.bc-btn.stop{background:var(--red-dim);color:var(--red)}
+.bc-btn.stop:hover{background:rgba(240,71,71,.2)}
+.bc-btn.restart{background:var(--blue-dim);color:var(--blue)}
+.bc-btn.restart:hover{background:rgba(59,130,246,.22)}
+.bc-btn.del{background:transparent;color:var(--muted2);border:1px solid transparent;margin-left:auto}
+.bc-btn.del:hover{color:var(--red);border-color:rgba(240,71,71,.3)}
+.bc-meta{margin-top:.75rem;padding-top:.65rem;border-top:1px solid var(--border);font-size:.68rem;color:var(--muted2)}
+
+/* ── Empty state ── */
+.empty-state{display:flex;flex-direction:column;align-items:center;justify-content:center;height:calc(100% - 200px);text-align:center;gap:.6rem}
+.empty-icon{font-size:3.5rem;margin-bottom:.5rem;filter:grayscale(.3)}
+.empty-title{font-size:1.2rem;font-weight:700}
+.empty-sub{color:var(--muted);font-size:.86rem;max-width:340px;line-height:1.6}
+.empty-btn{background:linear-gradient(135deg,var(--accent),#7c3aed);color:#fff;border:none;border-radius:9px;padding:.7rem 1.5rem;font-size:.88rem;font-weight:700;cursor:pointer;margin-top:.75rem;transition:opacity .2s,transform .1s;position:relative;overflow:hidden}
+.empty-btn::before{content:'';position:absolute;inset:0;background:linear-gradient(135deg,rgba(255,255,255,.1),transparent 60%)}
+.empty-btn:hover{opacity:.9;transform:translateY(-1px)}
+
+/* ═══════════════════════════ SERVER VIEW ═══════════════════════════ */
+.server-view{height:100%;display:flex;flex-direction:column;padding:0!important}
+
+/* Server topbar */
+.sv-header{padding:1.25rem 1.5rem 0;flex-shrink:0}
+.sv-title-row{display:flex;align-items:center;gap:1rem;margin-bottom:1rem}
+.sv-back{background:var(--surface2);border:1px solid var(--border);color:var(--muted);border-radius:8px;padding:.4rem .75rem;font-size:.75rem;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:.35rem;transition:all .15s;font-family:var(--font)}
+.sv-back:hover{color:var(--text);border-color:var(--border-h)}
+.sv-bot-info{flex:1;display:flex;align-items:center;gap:.75rem}
+.sv-bot-avatar{width:40px;height:40px;border-radius:10px;background:linear-gradient(135deg,var(--accent),#7c3aed);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
+.sv-bot-name{font-size:1.1rem;font-weight:800;letter-spacing:-.02em}
+.sv-bot-id{font-size:.68rem;color:var(--muted2);font-family:var(--mono)}
+.sv-controls{display:flex;gap:.4rem}
+.sv-btn{border:none;border-radius:8px;padding:.5rem 1rem;font-size:.78rem;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:.35rem;transition:all .15s;font-family:var(--font)}
+.sv-btn.start{background:var(--green-dim);color:var(--green);border:1px solid rgba(34,197,94,.25)}
+.sv-btn.start:hover{background:rgba(34,197,94,.25)}
+.sv-btn.stop{background:var(--red-dim);color:var(--red);border:1px solid rgba(240,71,71,.2)}
+.sv-btn.stop:hover{background:rgba(240,71,71,.22)}
+.sv-btn.restart{background:var(--blue-dim);color:var(--blue);border:1px solid rgba(59,130,246,.2)}
+.sv-btn.restart:hover{background:rgba(59,130,246,.22)}
+
+/* Server tabs */
+.sv-tabs{display:flex;gap:.25rem;padding:0 1.5rem;border-bottom:1px solid var(--border);margin-top:.75rem}
+.sv-tab{padding:.7rem 1.1rem;font-size:.78rem;font-weight:600;cursor:pointer;color:var(--muted);border-bottom:2px solid transparent;margin-bottom:-1px;transition:color .15s,border-color .15s;display:flex;align-items:center;gap:.4rem}
+.sv-tab:hover{color:var(--text)}
+.sv-tab.active{color:var(--accent-h);border-bottom-color:var(--accent)}
+
+/* Server tab panels */
+.sv-panels{flex:1;overflow:hidden;display:flex;flex-direction:column}
+.sv-panel{display:none;height:100%;overflow-y:auto;padding:1.25rem 1.5rem}
+.sv-panel.active{display:flex;flex-direction:column;animation:viewIn .2s ease}
+
+/* Console panel */
+.console-wrap{flex:1;display:flex;flex-direction:column;min-height:0}
+.console-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:.6rem}
+.console-status{display:flex;align-items:center;gap:.5rem;font-size:.75rem;font-weight:600}
+.console-log{flex:1;background:rgba(0,0,0,.6);border:1px solid var(--border);border-radius:10px;padding:.85rem;font-family:var(--mono);font-size:.72rem;line-height:1.75;overflow-y:auto;min-height:300px;color:#c9d9ef}
+.log-line{padding:1px 0}
+.log-line.err{color:#ff7575}
+.log-line.warn{color:#fbbf24}
+.log-line.info{color:var(--accent-h)}
+.log-line.ok{color:var(--green)}
+.log-empty{color:var(--muted2);text-align:center;padding:2.5rem;font-size:.82rem}
+.console-actions{display:flex;align-items:center;gap:.4rem;margin-top:.75rem}
+.console-input{flex:1;background:rgba(0,0,0,.4);border:1px solid var(--border);border-radius:8px;padding:.5rem .85rem;color:var(--text);font-family:var(--mono);font-size:.78rem;outline:none;transition:border-color .2s}
+.console-input:focus{border-color:var(--accent)}
+.console-input::placeholder{color:var(--muted2)}
+.btn-icon{background:var(--surface2);border:1px solid var(--border);color:var(--muted);border-radius:8px;padding:.48rem .75rem;font-size:.75rem;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:.3rem;transition:all .15s;font-family:var(--font)}
+.btn-icon:hover{color:var(--text);border-color:var(--border-h)}
+
+/* Stats in console */
+.server-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:.6rem;margin-bottom:.9rem}
+.ss-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:.75rem .85rem}
+.ss-label{font-size:.65rem;font-weight:700;color:var(--muted2);text-transform:uppercase;letter-spacing:.06em;margin-bottom:.25rem}
+.ss-val{font-size:1rem;font-weight:800;color:var(--text)}
+.ss-val.green{color:var(--green)}
+.ss-val.blue{color:var(--accent-h)}
+
+/* File manager */
+.fm-toolbar{display:flex;align-items:center;gap:.5rem;margin-bottom:.85rem;flex-wrap:wrap}
+.fm-path{flex:1;background:rgba(0,0,0,.35);border:1px solid var(--border);border-radius:8px;padding:.42rem .85rem;font-family:var(--mono);font-size:.76rem;color:var(--muted);min-width:160px}
+.fm-table{background:var(--surface);border:1px solid var(--border);border-radius:12px;overflow:hidden}
+.fm-head{display:grid;grid-template-columns:2rem 1fr 6rem 7rem 7rem;gap:0;background:var(--surface2);border-bottom:1px solid var(--border)}
+.fm-head-cell{padding:.55rem .75rem;font-size:.67rem;font-weight:700;color:var(--muted2);letter-spacing:.06em;text-transform:uppercase}
+.fm-row{display:grid;grid-template-columns:2rem 1fr 6rem 7rem 7rem;gap:0;border-bottom:1px solid var(--border);cursor:pointer;transition:background .1s;align-items:center}
+.fm-row:last-child{border-bottom:none}
+.fm-row:hover{background:var(--surface2)}
+.fm-row.selected{background:rgba(88,101,242,.08)}
+.fm-cell{padding:.55rem .75rem;font-size:.78rem}
+.fm-cell.name{display:flex;align-items:center;gap:.55rem;font-weight:500;color:var(--text)}
+.fm-cell.name .ficon{font-size:.95rem}
+.fm-cell.size{color:var(--muted2);font-family:var(--mono);font-size:.72rem}
+.fm-cell.date{color:var(--muted2);font-size:.72rem}
+.fm-cell.actions{display:flex;gap:.3rem;justify-content:flex-end}
+.fm-act-btn{background:transparent;border:none;color:var(--muted2);cursor:pointer;font-size:.78rem;padding:.2rem .4rem;border-radius:5px;transition:all .15s;font-family:var(--font)}
+.fm-act-btn:hover{background:var(--surface3);color:var(--text)}
+.fm-act-btn.danger:hover{color:var(--red)}
+
+/* Code editor */
+.editor-wrap{display:flex;flex-direction:column;height:100%}
+.editor-toolbar{display:flex;align-items:center;gap:.5rem;margin-bottom:.75rem;flex-wrap:wrap}
+.editor-file{font-family:var(--mono);font-size:.78rem;color:var(--muted);background:rgba(0,0,0,.25);padding:.35rem .75rem;border-radius:6px;border:1px solid var(--border)}
+.editor-area{flex:1;background:rgba(0,0,0,.55);border:1px solid var(--border);border-radius:10px;padding:.9rem;font-family:var(--mono);font-size:.78rem;line-height:1.8;color:#c9d9ef;outline:none;resize:none;min-height:350px;tab-size:4}
+.editor-area:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(88,101,242,.15)}
+.btn-save{background:var(--green-dim);color:var(--green);border:1px solid rgba(34,197,94,.25);border-radius:8px;padding:.5rem 1.1rem;font-size:.78rem;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:.35rem;transition:all .15s;font-family:var(--font)}
+.btn-save:hover{background:rgba(34,197,94,.25)}
+.btn-cancel{background:var(--surface2);color:var(--muted);border:1px solid var(--border);border-radius:8px;padding:.5rem .9rem;font-size:.78rem;font-weight:600;cursor:pointer;transition:all .15s;font-family:var(--font)}
+.btn-cancel:hover{color:var(--text);border-color:var(--border-h)}
+
+/* Settings panel */
+.settings-section{background:var(--surface);border:1px solid var(--border);border-radius:12px;overflow:hidden;margin-bottom:1rem}
+.settings-section-head{padding:.85rem 1.1rem;border-bottom:1px solid var(--border);background:var(--surface2)}
+.settings-section-title{font-size:.8rem;font-weight:700;display:flex;align-items:center;gap:.5rem}
+.settings-rows{padding:.5rem}
+.settings-row{display:flex;align-items:center;justify-content:space-between;padding:.65rem .6rem;border-radius:8px;transition:background .15s}
+.settings-row:hover{background:var(--surface2)}
+.settings-row-label{font-size:.82rem;font-weight:500}
+.settings-row-desc{font-size:.72rem;color:var(--muted);margin-top:.1rem}
+.settings-row-right{flex-shrink:0;margin-left:1rem}
+.form-input-sm{background:rgba(0,0,0,.3);border:1px solid var(--border);border-radius:7px;padding:.4rem .7rem;color:var(--text);font-size:.8rem;outline:none;transition:border-color .2s;font-family:var(--font);width:200px}
+.form-input-sm:focus{border-color:var(--accent)}
+.btn-danger-sm{background:var(--red-dim);color:var(--red);border:1px solid rgba(240,71,71,.2);border-radius:7px;padding:.4rem .85rem;font-size:.75rem;font-weight:700;cursor:pointer;transition:all .15s;font-family:var(--font)}
+.btn-danger-sm:hover{background:rgba(240,71,71,.22)}
+
+/* ═══════════════════════════ MODALS ═══════════════════════════ */
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.75);backdrop-filter:blur(6px);z-index:100;display:none;align-items:center;justify-content:center;padding:1rem}
+.overlay.open{display:flex}
+.modal{background:var(--surface);border:1px solid var(--border);border-radius:18px;width:100%;max-width:640px;max-height:90vh;display:flex;flex-direction:column;animation:modalIn .3s cubic-bezier(.34,1.56,.64,1)}
+@keyframes modalIn{from{opacity:0;transform:scale(.93) translateY(16px)}to{opacity:1;transform:scale(1) translateY(0)}}
+.modal-sm{max-width:420px}
+.modal-head{padding:1.1rem 1.25rem;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+.modal-head h3{font-size:.95rem;font-weight:700}
+.modal-x{background:var(--surface2);border:1px solid var(--border);color:var(--muted);width:28px;height:28px;border-radius:7px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:14px;transition:all .15s}
+.modal-x:hover{color:var(--text);border-color:var(--border-h)}
+.modal-body{padding:1.25rem;overflow-y:auto;flex:1}
+.modal-foot{padding:.9rem 1.25rem;border-top:1px solid var(--border);display:flex;align-items:center;justify-content:flex-end;gap:.5rem;flex-shrink:0}
+.form-group{margin-bottom:1rem}
+.form-label{display:block;font-size:.72rem;font-weight:700;color:var(--muted);letter-spacing:.06em;text-transform:uppercase;margin-bottom:.4rem}
+.form-input{width:100%;background:rgba(0,0,0,.4);border:1px solid var(--border);border-radius:9px;padding:.65rem .9rem;color:var(--text);font-size:.86rem;outline:none;transition:border-color .2s,box-shadow .2s;font-family:var(--font)}
+.form-input:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-glow)}
+.form-input::placeholder{color:var(--muted2)}
+.form-hint{font-size:.72rem;color:var(--muted2);margin-top:.3rem}
+.code-input{width:100%;background:rgba(0,0,0,.5);border:1px solid var(--border);border-radius:9px;padding:.7rem .9rem;color:#c9d9ef;font-family:var(--mono);font-size:.76rem;outline:none;resize:vertical;min-height:240px;line-height:1.75;transition:border-color .2s}
+.code-input:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(88,101,242,.15)}
+.template-grid{display:grid;grid-template-columns:1fr 1fr;gap:.6rem;margin-bottom:1rem}
+.template-card{background:rgba(0,0,0,.25);border:1px solid var(--border);border-radius:10px;padding:.8rem;cursor:pointer;transition:all .15s}
+.template-card:hover{border-color:var(--accent);background:rgba(88,101,242,.06)}
+.template-card h4{font-size:.8rem;font-weight:700;margin-bottom:.25rem;display:flex;align-items:center;gap:.4rem}
+.template-card p{font-size:.72rem;color:var(--muted);line-height:1.5}
+.btn-primary{background:linear-gradient(135deg,var(--accent),#7c3aed);color:#fff;border:none;border-radius:9px;padding:.62rem 1.3rem;font-size:.84rem;font-weight:700;cursor:pointer;position:relative;overflow:hidden;transition:opacity .2s,transform .1s;font-family:var(--font)}
+.btn-primary::before{content:'';position:absolute;inset:0;background:linear-gradient(135deg,rgba(255,255,255,.1),transparent 60%)}
+.btn-primary:hover{opacity:.9;transform:translateY(-1px)}
+.btn-primary:disabled{opacity:.4;cursor:not-allowed;transform:none}
+.btn-secondary{background:var(--surface2);color:var(--muted);border:1px solid var(--border);border-radius:9px;padding:.62rem 1.1rem;font-size:.84rem;font-weight:600;cursor:pointer;transition:all .15s;font-family:var(--font)}
+.btn-secondary:hover{color:var(--text);border-color:var(--border-h)}
+.btn-danger{background:var(--red);color:#fff;border:none;border-radius:9px;padding:.62rem 1.2rem;font-size:.84rem;font-weight:700;cursor:pointer;transition:opacity .2s;font-family:var(--font)}
+.btn-danger:hover{opacity:.85}
+.confirm-text{font-size:.86rem;color:var(--muted);line-height:1.65}
+.confirm-text strong{color:var(--text)}
+
+/* ── Toast ── */
+#toasts{position:fixed;bottom:1.5rem;right:1.5rem;z-index:200;display:flex;flex-direction:column;gap:.4rem}
+.toast{background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:.6rem 1rem;font-size:.8rem;font-weight:600;display:flex;align-items:center;gap:.5rem;min-width:220px;box-shadow:0 8px 30px rgba(0,0,0,.5);animation:toastIn .3s cubic-bezier(.34,1.56,.64,1)}
+@keyframes toastIn{from{opacity:0;transform:translateX(20px) scale(.95)}to{opacity:1;transform:translateX(0) scale(1)}}
+.toast.ok{border-color:rgba(34,197,94,.35);color:var(--green)}
+.toast.err{border-color:rgba(240,71,71,.35);color:var(--red)}
+.toast.info{border-color:rgba(88,101,242,.3);color:var(--accent-h)}
+
+/* ── Rename modal ── */
+.rename-input{width:100%;background:rgba(0,0,0,.4);border:1px solid var(--border);border-radius:9px;padding:.65rem .9rem;color:var(--text);font-family:var(--mono);font-size:.86rem;outline:none;transition:border-color .2s}
+.rename-input:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-glow)}
+
+/* upload drop zone */
+.drop-zone{border:2px dashed var(--border);border-radius:12px;padding:2rem;text-align:center;cursor:pointer;transition:all .2s;color:var(--muted)}
+.drop-zone:hover,.drop-zone.drag-over{border-color:var(--accent);background:rgba(88,101,242,.05);color:var(--accent-h)}
+.drop-zone .dz-icon{font-size:2rem;margin-bottom:.5rem}
+.drop-zone p{font-size:.82rem}
+.drop-zone input[type="file"]{display:none}
+</style>
+</head>
+<body>
+
+<!-- ═══════════════════════════ SIDEBAR ═══════════════════════════ -->
+<nav class="sidebar">
+  <div class="sb-logo">
+    <div class="sb-logo-icon">🤖</div>
+    <div class="sb-logo-text">NexusBot</div>
+  </div>
+
+  <div class="sb-section">Servers</div>
+  <div class="sb-bots" id="sb-bots">
+    {% for bot in bots %}
+    <div class="sb-bot {% if bot.status == 'running' %}active{% endif %}" onclick="openServer('{{ bot.id }}')" id="sb-{{ bot.id }}">
+      <div class="sb-bot-dot {{ bot.status }}"></div>
+      <span class="sb-bot-name">{{ bot.name }}</span>
+      <span class="sb-bot-status">{{ '▶' if bot.status == 'running' else '⏹' }}</span>
+    </div>
+    {% endfor %}
+    {% if not bots %}
+    <div style="padding:.6rem .75rem;font-size:.76rem;color:var(--muted2);text-align:center;margin-top:.5rem">No bots yet</div>
+    {% endif %}
+  </div>
+
+  <div class="sb-footer">
+    <button class="sb-add-btn" onclick="openAddModal()">＋ New Bot</button>
+    <a href="/logout"><button class="sb-logout">↩ Sign Out</button></a>
+  </div>
+</nav>
+
+<!-- ═══════════════════════════ MAIN ═══════════════════════════ -->
+<div class="main">
+  <!-- Topbar -->
+  <div class="topbar">
+    <div class="topbar-left">
+      <div class="topbar-breadcrumb" id="topbar-bc">
+        <span class="current">Dashboard</span>
+      </div>
+    </div>
+    <div class="topbar-right">
+      <span class="top-badge green" id="running-badge">● {{ bots | selectattr('status','eq','running') | list | length }} Running</span>
+      <span class="top-badge muted" id="total-badge">{{ bots | length }} Total</span>
+      <button class="btn-add" onclick="openAddModal()">＋ New Bot</button>
+    </div>
+  </div>
+
+  <!-- Views container -->
+  <div class="views">
+
+    <!-- ── Dashboard View ── -->
+    <div class="view active" id="view-dashboard">
+      {% if bots %}
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-top"><div class="stat-label">Total Bots</div><div class="stat-icon">🤖</div></div>
+          <div class="stat-value blue" id="st-total">{{ bots | length }}</div>
+          <div class="stat-sub">All registered bots</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-top"><div class="stat-label">Running</div><div class="stat-icon">▶️</div></div>
+          <div class="stat-value green" id="st-running">{{ bots | selectattr('status','eq','running') | list | length }}</div>
+          <div class="stat-sub">Active right now</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-top"><div class="stat-label">Stopped</div><div class="stat-icon">⏹️</div></div>
+          <div class="stat-value red" id="st-stopped">{{ bots | selectattr('status','eq','stopped') | list | length }}</div>
+          <div class="stat-sub">Offline</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-top"><div class="stat-label">Uptime</div><div class="stat-icon">📈</div></div>
+          <div class="stat-value yellow">100%</div>
+          <div class="stat-sub">Panel availability</div>
+        </div>
+      </div>
+      {% endif %}
+
+      <div class="section-head">
+        <div class="section-title">Bot Servers</div>
+      </div>
+
+      {% if not bots %}
+      <div class="empty-state">
+        <div class="empty-icon">🤖</div>
+        <div class="empty-title">No bots hosted yet</div>
+        <div class="empty-sub">Create your first Telegram bot server. Each bot gets its own isolated environment with logs, file manager and code editor.</div>
+        <button class="empty-btn" onclick="openAddModal()">＋ Host Your First Bot</button>
+      </div>
+      {% else %}
+      <div class="bots-grid" id="bots-grid">
+        {% for bot in bots %}
+        <div class="bot-card {% if bot.status == 'running' %}running-card{% endif %}" id="card-{{ bot.id }}">
+          <div class="bot-card-stripe"></div>
+          <div class="bot-card-body">
+            <div class="bc-header">
+              <div class="bc-info">
+                <div class="bc-name">{{ bot.name }}</div>
+                <div class="bc-id">{{ bot.id }}</div>
+              </div>
+              <div class="bc-badge {{ bot.status }}">
+                <div class="bdot"></div>
+                {{ bot.status | capitalize }}
+              </div>
+            </div>
+            <div class="bc-token">🔑 {{ bot.token[:24] }}…</div>
+            <div class="bc-actions">
+              <button class="bc-btn open" onclick="openServer('{{ bot.id }}')">📂 Open Server</button>
+              {% if bot.status == 'running' %}
+              <button class="bc-btn stop" onclick="botAction('{{ bot.id }}','stop',event)">⏹ Stop</button>
+              <button class="bc-btn restart" onclick="botAction('{{ bot.id }}','restart',event)">↻ Restart</button>
+              {% else %}
+              <button class="bc-btn start" onclick="botAction('{{ bot.id }}','start',event)">▶ Start</button>
+              {% endif %}
+              <button class="bc-btn del" onclick="confirmDelete('{{ bot.id }}','{{ bot.name }}',event)" title="Delete bot">🗑</button>
+            </div>
+            <div class="bc-meta">📅 Created {{ bot.created_at[:10] }}</div>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+      {% endif %}
+    </div>
+
+    <!-- ── Server View ── -->
+    <div class="view server-view" id="view-server">
+      <div class="sv-header">
+        <div class="sv-title-row">
+          <button class="sv-back" onclick="backToDashboard()">← Back</button>
+          <div class="sv-bot-info">
+            <div class="sv-bot-avatar">🤖</div>
+            <div>
+              <div class="sv-bot-name" id="sv-bot-name">Bot Name</div>
+              <div class="sv-bot-id" id="sv-bot-id">bot_id</div>
+            </div>
+            <div class="bc-badge stopped" id="sv-badge" style="margin-left:.5rem">
+              <div class="bdot"></div>
+              <span id="sv-badge-text">Stopped</span>
+            </div>
+          </div>
+          <div class="sv-controls">
+            <button class="sv-btn start" id="sv-start-btn" onclick="svAction('start')">▶ Start</button>
+            <button class="sv-btn stop" id="sv-stop-btn" onclick="svAction('stop')" style="display:none">⏹ Stop</button>
+            <button class="sv-btn restart" onclick="svAction('restart')">↻ Restart</button>
+          </div>
+        </div>
+        <div class="sv-tabs">
+          <div class="sv-tab active" onclick="svTab('console',this)">💻 Console</div>
+          <div class="sv-tab" onclick="svTab('files',this)">📁 File Manager</div>
+          <div class="sv-tab" onclick="svTab('editor',this)">✏️ Code Editor</div>
+          <div class="sv-tab" onclick="svTab('settings',this)">⚙️ Settings</div>
+        </div>
+      </div>
+
+      <div class="sv-panels">
+        <!-- Console -->
+        <div class="sv-panel active" id="panel-console">
+          <div class="server-stats">
+            <div class="ss-card">
+              <div class="ss-label">Status</div>
+              <div class="ss-val green" id="ss-status">—</div>
+            </div>
+            <div class="ss-card">
+              <div class="ss-label">PID</div>
+              <div class="ss-val blue" id="ss-pid">—</div>
+            </div>
+            <div class="ss-card">
+              <div class="ss-label">Log Lines</div>
+              <div class="ss-val" id="ss-lines">—</div>
+            </div>
+          </div>
+          <div class="console-wrap">
+            <div class="console-header">
+              <div class="console-status">
+                <span id="con-status-dot" style="width:8px;height:8px;border-radius:50%;background:var(--muted2);display:inline-block"></span>
+                <span id="con-status-text" style="font-size:.75rem;color:var(--muted)">Stopped</span>
+              </div>
+              <div style="display:flex;gap:.4rem">
+                <button class="btn-icon" onclick="refreshLogs()">↻ Refresh</button>
+                <button class="btn-icon" id="auto-btn" onclick="toggleAuto()">⏱ Auto</button>
+                <button class="btn-icon" onclick="clearConsole()">🗑 Clear</button>
+              </div>
+            </div>
+            <div class="console-log" id="console-out">
+              <div class="log-empty">No logs yet — start the bot to see output.</div>
+            </div>
+            <div class="console-actions">
+              <input class="console-input" placeholder="Filter logs..." id="log-filter" oninput="filterLogs()" />
+            </div>
+          </div>
+        </div>
+
+        <!-- File Manager -->
+        <div class="sv-panel" id="panel-files">
+          <div class="fm-toolbar">
+            <div class="fm-path" id="fm-path">/ bot files</div>
+            <button class="btn-icon" onclick="openUploadModal()">⬆ Upload</button>
+            <button class="btn-icon" onclick="openNewFileModal()">＋ New File</button>
+          </div>
+          <div class="fm-table">
+            <div class="fm-head">
+              <div class="fm-head-cell"></div>
+              <div class="fm-head-cell">Name</div>
+              <div class="fm-head-cell">Size</div>
+              <div class="fm-head-cell">Modified</div>
+              <div class="fm-head-cell" style="text-align:right">Actions</div>
+            </div>
+            <div id="fm-rows">
+              <!-- populated by JS -->
+            </div>
+          </div>
+        </div>
+
+        <!-- Code Editor -->
+        <div class="sv-panel" id="panel-editor">
+          <div class="editor-wrap">
+            <div class="editor-toolbar">
+              <div class="editor-file" id="editor-filename">main.py</div>
+              <button class="btn-save" onclick="saveCode()">💾 Save File</button>
+              <button class="btn-cancel" onclick="reloadCode()">↻ Reload</button>
+              <button class="btn-icon" style="margin-left:auto" onclick="openLintInfo()">🔍 Inspect</button>
+            </div>
+            <textarea class="editor-area" id="code-editor" spellcheck="false"
+              placeholder="# Your bot code will appear here..."></textarea>
+          </div>
+        </div>
+
+        <!-- Settings -->
+        <div class="sv-panel" id="panel-settings">
+          <div class="settings-section">
+            <div class="settings-section-head">
+              <div class="settings-section-title">🤖 Bot Details</div>
+            </div>
+            <div class="settings-rows">
+              <div class="settings-row">
+                <div>
+                  <div class="settings-row-label">Bot Name</div>
+                  <div class="settings-row-desc">Display name for this server</div>
+                </div>
+                <div class="settings-row-right">
+                  <input class="form-input-sm" id="settings-name" type="text" placeholder="Bot name">
+                </div>
+              </div>
+              <div class="settings-row">
+                <div>
+                  <div class="settings-row-label">Bot Token</div>
+                  <div class="settings-row-desc">Telegram bot token from @BotFather</div>
+                </div>
+                <div class="settings-row-right">
+                  <input class="form-input-sm" id="settings-token" type="text" placeholder="123456:ABC...">
+                </div>
+              </div>
+            </div>
+          </div>
+          <div style="display:flex;justify-content:flex-end;gap:.5rem;margin-bottom:1.5rem">
+            <button class="btn-primary" onclick="saveSettings()">Save Changes</button>
+          </div>
+          <div class="settings-section">
+            <div class="settings-section-head">
+              <div class="settings-section-title" style="color:var(--red)">⚠️ Danger Zone</div>
+            </div>
+            <div class="settings-rows">
+              <div class="settings-row">
+                <div>
+                  <div class="settings-row-label">Delete Server</div>
+                  <div class="settings-row-desc">Permanently delete this bot and all its files</div>
+                </div>
+                <div class="settings-row-right">
+                  <button class="btn-danger-sm" onclick="deleteCurrentBot()">Delete Server</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ═══════════════════════════ ADD BOT MODAL ═══════════════════════════ -->
+<div class="overlay" id="add-modal">
+  <div class="modal">
+    <div class="modal-head">
+      <h3 id="modal-title">🤖 New Bot Server</h3>
+      <div class="modal-x" onclick="closeModal('add-modal')">✕</div>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="edit-bot-id">
+      <div id="template-area">
+        <div style="font-size:.73rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:.65rem">Starter Templates</div>
+        <div class="template-grid">
+          <div class="template-card" onclick="useTemplate('echo')">
+            <h4>⚡ Echo Bot</h4>
+            <p>Echoes back every message. Best starting point.</p>
+          </div>
+          <div class="template-card" onclick="useTemplate('command')">
+            <h4>🎯 Command Bot</h4>
+            <p>Handles /start and /help with clean replies.</p>
+          </div>
+          <div class="template-card" onclick="useTemplate('menu')">
+            <h4>📋 Menu Bot</h4>
+            <p>Inline keyboard menu with callback handlers.</p>
+          </div>
+          <div class="template-card" onclick="useTemplate('blank')">
+            <h4>✨ Blank</h4>
+            <p>Just the token injection boilerplate. You write the rest.</p>
+          </div>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Bot Name</label>
+        <input class="form-input" id="bot-name" placeholder="My Awesome Bot" type="text">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Telegram Bot Token</label>
+        <input class="form-input" id="bot-token" placeholder="123456789:ABCdef..." type="text">
+        <div class="form-hint">Get it from @BotFather on Telegram</div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Bot Code (Python)</label>
+        <textarea class="code-input" id="bot-code" placeholder="# Token auto-injected via os.environ['BOT_TOKEN']
+# Click a template above to get started!"></textarea>
+        <div class="form-hint">The bot token is injected automatically as <code style="font-family:var(--mono);background:rgba(0,0,0,.3);padding:1px 5px;border-radius:3px">os.environ['BOT_TOKEN']</code></div>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn-secondary" onclick="closeModal('add-modal')">Cancel</button>
+      <button class="btn-primary" id="save-btn" onclick="saveBot()">Create Server</button>
+    </div>
+  </div>
+</div>
+
+<!-- Confirm delete -->
+<div class="overlay" id="confirm-modal">
+  <div class="modal modal-sm">
+    <div class="modal-head">
+      <h3>Delete Server</h3>
+      <div class="modal-x" onclick="closeModal('confirm-modal')">✕</div>
+    </div>
+    <div class="modal-body">
+      <p class="confirm-text">Are you sure you want to delete <strong id="confirm-name"></strong>?<br>This stops the bot and removes all files. Cannot be undone.</p>
+    </div>
+    <div class="modal-foot">
+      <button class="btn-secondary" onclick="closeModal('confirm-modal')">Cancel</button>
+      <button class="btn-danger" onclick="doDelete()">Delete Forever</button>
+    </div>
+  </div>
+</div>
+
+<!-- Rename modal -->
+<div class="overlay" id="rename-modal">
+  <div class="modal modal-sm">
+    <div class="modal-head">
+      <h3>Rename File</h3>
+      <div class="modal-x" onclick="closeModal('rename-modal')">✕</div>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label class="form-label">New Name</label>
+        <input class="rename-input" id="rename-input" type="text">
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn-secondary" onclick="closeModal('rename-modal')">Cancel</button>
+      <button class="btn-primary" onclick="doRename()">Rename</button>
+    </div>
+  </div>
+</div>
+
+<!-- Upload modal -->
+<div class="overlay" id="upload-modal">
+  <div class="modal modal-sm">
+    <div class="modal-head">
+      <h3>Upload File</h3>
+      <div class="modal-x" onclick="closeModal('upload-modal')">✕</div>
+    </div>
+    <div class="modal-body">
+      <div class="drop-zone" id="drop-zone" onclick="document.getElementById('file-input').click()">
+        <input type="file" id="file-input" multiple onchange="handleFileSelect(event)">
+        <div class="dz-icon">📁</div>
+        <p>Click to browse or drag files here</p>
+        <p style="font-size:.72rem;margin-top:.25rem;color:var(--muted2)">Max 10MB per file</p>
+      </div>
+      <div id="upload-list" style="margin-top:.75rem"></div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn-secondary" onclick="closeModal('upload-modal')">Close</button>
+    </div>
+  </div>
+</div>
+
+<!-- New file modal -->
+<div class="overlay" id="newfile-modal">
+  <div class="modal modal-sm">
+    <div class="modal-head">
+      <h3>New File</h3>
+      <div class="modal-x" onclick="closeModal('newfile-modal')">✕</div>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label class="form-label">File Name</label>
+        <input class="form-input" id="newfile-name" type="text" placeholder="helper.py">
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn-secondary" onclick="closeModal('newfile-modal')">Cancel</button>
+      <button class="btn-primary" onclick="createNewFile()">Create</button>
+    </div>
+  </div>
+</div>
+
+<div id="toasts"></div>
+
+<script>
+// ═══════════════════════════════════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════════════════════════════════
+let currentBotId = null;
+let currentBotName = '';
+let logsAutoInterval = null;
+let allLogs = [];
+let deleteBotId = null;
+let renameTarget = null;
+let isEditMode = false;
+
+const TEMPLATES = {
+  echo: `import os, logging
+from telegram.ext import ApplicationBuilder, MessageHandler, filters
+
+logging.basicConfig(level=logging.INFO)
+TOKEN = os.environ.get('BOT_TOKEN', '')
+
+async def echo(update, context):
+    await update.message.reply_text(f"You said: {update.message.text}")
+
+def main():
+    app = ApplicationBuilder().token(TOKEN).build()
+    app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, echo))
+    print("Echo bot started!")
+    app.run_polling()
+
+if __name__ == '__main__':
+    main()`,
+
+  command: `import os, logging
+from telegram import Update
+from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes
+
+logging.basicConfig(level=logging.INFO)
+TOKEN = os.environ.get('BOT_TOKEN', '')
+
+async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    name = update.effective_user.first_name
+    await update.message.reply_text(
+        f"👋 Hello {name}!\\n\\nWelcome to my bot!\\nUse /help for commands."
+    )
+
+async def help_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    await update.message.reply_text(
+        "📋 *Commands*\\n\\n/start — Welcome\\n/help — This message",
+        parse_mode='Markdown'
+    )
+
+def main():
+    app = ApplicationBuilder().token(TOKEN).build()
+    app.add_handler(CommandHandler("start", start))
+    app.add_handler(CommandHandler("help", help_cmd))
+    print("Command bot started!")
+    app.run_polling()
+
+if __name__ == '__main__':
+    main()`,
+
+  menu: `import os, logging
+from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
+from telegram.ext import ApplicationBuilder, CommandHandler, CallbackQueryHandler, ContextTypes
+
+logging.basicConfig(level=logging.INFO)
+TOKEN = os.environ.get('BOT_TOKEN', '')
+
+async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    keyboard = [
+        [InlineKeyboardButton("🔥 Option 1", callback_data='opt1'),
+         InlineKeyboardButton("⚡ Option 2", callback_data='opt2')],
+        [InlineKeyboardButton("ℹ️ Help", callback_data='help')]
+    ]
+    reply_markup = InlineKeyboardMarkup(keyboard)
+    await update.message.reply_text("Choose an option:", reply_markup=reply_markup)
+
+async def button(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    query = update.callback_query
+    await query.answer()
+    await query.edit_message_text(f"You chose: {query.data}")
+
+def main():
+    app = ApplicationBuilder().token(TOKEN).build()
+    app.add_handler(CommandHandler("start", start))
+    app.add_handler(CallbackQueryHandler(button))
+    app.run_polling()
+
+if __name__ == '__main__':
+    main()`,
+
+  blank: `import os
+from telegram.ext import ApplicationBuilder
+
+TOKEN = os.environ.get('BOT_TOKEN', '')
+
+def main():
+    app = ApplicationBuilder().token(TOKEN).build()
+    # Add your handlers here
+    app.run_polling()
+
+if __name__ == '__main__':
+    main()`
+};
+
+// ═══════════════════════════════════════════════════════════════════
+// NAVIGATION
+// ═══════════════════════════════════════════════════════════════════
+function showView(id) {
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  document.getElementById('view-' + id).classList.add('active');
+}
+
+function backToDashboard() {
+  stopAutoRefresh();
+  currentBotId = null;
+  showView('dashboard');
+  document.getElementById('topbar-bc').innerHTML = '<span class="current">Dashboard</span>';
+}
+
+function openServer(botId) {
+  currentBotId = botId;
+  // Find bot name from sidebar
+  const sbEl = document.getElementById('sb-' + botId);
+  currentBotName = sbEl ? sbEl.querySelector('.sb-bot-name').textContent : botId;
+  document.getElementById('sv-bot-name').textContent = currentBotName;
+  document.getElementById('sv-bot-id').textContent = botId;
+  document.getElementById('topbar-bc').innerHTML = `<span>Dashboard</span><span class="sep">/</span><span class="current">${escHtml(currentBotName)}</span>`;
+
+  // Activate console tab
+  svTab('console', document.querySelector('.sv-tab'));
+  showView('server');
+  loadServerStatus();
+  refreshLogs();
+  loadFileManager();
+  loadCodeEditor();
+
+  // Load settings
+  fetch(`/api/bot/${botId}/code`).then(r=>r.json()).then(d=>{
+    document.getElementById('settings-name').value = d.name || '';
+    document.getElementById('settings-token').value = d.token || '';
+  });
+}
+
+function svTab(name, el) {
+  document.querySelectorAll('.sv-tab').forEach(t => t.classList.remove('active'));
+  if (el) el.classList.add('active');
+  document.querySelectorAll('.sv-panel').forEach(p => p.classList.remove('active'));
+  const panel = document.getElementById('panel-' + name);
+  if (panel) panel.classList.add('active');
+  if (name === 'console') refreshLogs();
+  if (name === 'files') loadFileManager();
+  if (name === 'editor') loadCodeEditor();
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// SERVER STATUS
+// ═══════════════════════════════════════════════════════════════════
+async function loadServerStatus() {
+  if (!currentBotId) return;
+  try {
+    const res = await fetch(`/api/bot/${currentBotId}/logs?lines=1`);
+    const data = await res.json();
+    updateServerStatus(data.status);
+  } catch(e) {}
+}
+
+function updateServerStatus(status) {
+  const running = status === 'running';
+  const badge = document.getElementById('sv-badge');
+  const badgeText = document.getElementById('sv-badge-text');
+  const startBtn = document.getElementById('sv-start-btn');
+  const stopBtn = document.getElementById('sv-stop-btn');
+  const dot = document.getElementById('con-status-dot');
+  const statusText = document.getElementById('con-status-text');
+  const ssStatus = document.getElementById('ss-status');
+
+  badge.className = `bc-badge ${status}`;
+  badgeText.textContent = status.charAt(0).toUpperCase() + status.slice(1);
+  if (running) {
+    startBtn.style.display = 'none';
+    stopBtn.style.display = '';
+    dot.style.background = 'var(--green)';
+    dot.style.boxShadow = '0 0 8px rgba(34,197,94,.6)';
+    statusText.style.color = 'var(--green)';
+    statusText.textContent = '● Running';
+    ssStatus.textContent = 'Running';
+    ssStatus.className = 'ss-val green';
+  } else {
+    startBtn.style.display = '';
+    stopBtn.style.display = 'none';
+    dot.style.background = 'var(--muted2)';
+    dot.style.boxShadow = 'none';
+    statusText.style.color = 'var(--muted)';
+    statusText.textContent = '● Stopped';
+    ssStatus.textContent = 'Stopped';
+    ssStatus.className = 'ss-val';
+  }
+}
+
+async function svAction(action) {
+  if (!currentBotId) return;
+  try {
+    const res = await fetch(`/api/bot/${currentBotId}/${action}`, { method: 'POST' });
+    const data = await res.json();
+    if (data.success) {
+      toast(action.charAt(0).toUpperCase() + action.slice(1) + 'd successfully', 'ok');
+      if (data.pid) document.getElementById('ss-pid').textContent = data.pid;
+      setTimeout(() => { loadServerStatus(); refreshLogs(); }, 800);
+      setTimeout(() => updateDashboardCards(), 1000);
+    } else {
+      toast(data.error || `Failed to ${action}`, 'err');
+    }
+  } catch(e) { toast('Network error', 'err'); }
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// LOGS
+// ═══════════════════════════════════════════════════════════════════
+async function refreshLogs() {
+  if (!currentBotId) return;
+  try {
+    const res = await fetch(`/api/bot/${currentBotId}/logs?lines=100`);
+    const data = await res.json();
+    allLogs = data.logs || [];
+    updateServerStatus(data.status);
+    document.getElementById('ss-lines').textContent = allLogs.length;
+    renderLogs();
+  } catch(e) {}
+}
+
+function renderLogs() {
+  const el = document.getElementById('console-out');
+  const filter = document.getElementById('log-filter').value.toLowerCase();
+  const lines = filter ? allLogs.filter(l => l.toLowerCase().includes(filter)) : allLogs;
+  if (!lines.length) {
+    el.innerHTML = `<div class="log-empty">No logs yet — start the bot to see output.</div>`;
+    return;
+  }
+  el.innerHTML = lines.map(line => {
+    const cls = /error|exception|traceback/i.test(line) ? 'err'
+              : /warn/i.test(line) ? 'warn'
+              : /info|start/i.test(line) ? 'info'
+              : /success|running/i.test(line) ? 'ok' : '';
+    return `<div class="log-line ${cls}">${escHtml(line)}</div>`;
+  }).join('');
+  el.scrollTop = el.scrollHeight;
+}
+
+function filterLogs() { renderLogs(); }
+
+function clearConsole() {
+  allLogs = [];
+  document.getElementById('console-out').innerHTML = '<div class="log-empty">Console cleared.</div>';
+}
+
+function toggleAuto() {
+  const btn = document.getElementById('auto-btn');
+  if (logsAutoInterval) {
+    stopAutoRefresh();
+    btn.textContent = '⏱ Auto';
+    btn.style.color = '';
+  } else {
+    logsAutoInterval = setInterval(refreshLogs, 2000);
+    btn.textContent = '⏹ Stop';
+    btn.style.color = 'var(--green)';
+    toast('Auto-refresh enabled', 'info');
+  }
+}
+
+function stopAutoRefresh() {
+  if (logsAutoInterval) { clearInterval(logsAutoInterval); logsAutoInterval = null; }
+  const btn = document.getElementById('auto-btn');
+  if (btn) { btn.textContent = '⏱ Auto'; btn.style.color = ''; }
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// FILE MANAGER
+// ═══════════════════════════════════════════════════════════════════
+// Simulated file system (local state for UI — real impl reads from server)
+let fmFiles = [];
+
+async function loadFileManager() {
+  if (!currentBotId) return;
+  // Load the main bot file info
+  try {
+    const res = await fetch(`/api/bot/${currentBotId}/code`);
+    const data = await res.json();
+    // Build a simulated file list with the main script
+    const now = new Date().toISOString().slice(0,10);
+    fmFiles = [
+      { name: 'main.py', size: data.code ? data.code.length : 0, type: 'python', date: now, editable: true }
+    ];
+    renderFM();
+  } catch(e) {}
+}
+
+function renderFM() {
+  const container = document.getElementById('fm-rows');
+  if (!fmFiles.length) {
+    container.innerHTML = `<div style="padding:2rem;text-align:center;color:var(--muted2);font-size:.82rem">No files found</div>`;
+    return;
+  }
+  container.innerHTML = fmFiles.map((f, i) => `
+    <div class="fm-row" id="fmrow-${i}">
+      <div class="fm-cell"></div>
+      <div class="fm-cell name"><span class="ficon">${f.type==='python'?'🐍':'📄'}</span>${escHtml(f.name)}</div>
+      <div class="fm-cell size">${formatSize(f.size)}</div>
+      <div class="fm-cell date">${f.date}</div>
+      <div class="fm-cell actions">
+        ${f.editable ? `<button class="fm-act-btn" onclick="editFileInEditor('${i}')" title="Edit">✏</button>` : ''}
+        <button class="fm-act-btn" onclick="openRenameModal('${i}')" title="Rename">✏️</button>
+        <button class="fm-act-btn danger" onclick="fm_delete('${i}')" title="Delete">🗑</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+function editFileInEditor(idx) {
+  svTab('editor', document.querySelectorAll('.sv-tab')[2]);
+  loadCodeEditor();
+  toast('Opened in code editor', 'info');
+}
+
+function openRenameModal(idx) {
+  renameTarget = parseInt(idx);
+  document.getElementById('rename-input').value = fmFiles[renameTarget].name;
+  document.getElementById('rename-modal').classList.add('open');
+}
+
+function doRename() {
+  const newName = document.getElementById('rename-input').value.trim();
+  if (!newName) { toast('Enter a name', 'err'); return; }
+  if (renameTarget !== null) {
+    fmFiles[renameTarget].name = newName;
+    renderFM();
+    toast(`Renamed to ${newName}`, 'ok');
+  }
+  closeModal('rename-modal');
+}
+
+function fm_delete(idx) {
+  fmFiles.splice(idx, 1);
+  renderFM();
+  toast('File removed', 'ok');
+}
+
+function openUploadModal() {
+  document.getElementById('upload-modal').classList.add('open');
+}
+
+function openNewFileModal() {
+  document.getElementById('newfile-name').value = '';
+  document.getElementById('newfile-modal').classList.add('open');
+}
+
+function createNewFile() {
+  const name = document.getElementById('newfile-name').value.trim();
+  if (!name) { toast('Enter a file name', 'err'); return; }
+  fmFiles.push({ name, size: 0, type: name.endsWith('.py') ? 'python' : 'text', date: new Date().toISOString().slice(0,10), editable: true });
+  renderFM();
+  closeModal('newfile-modal');
+  toast(`Created ${name}`, 'ok');
+}
+
+function handleFileSelect(e) {
+  const files = [...e.target.files];
+  const list = document.getElementById('upload-list');
+  files.forEach(f => {
+    fmFiles.push({ name: f.name, size: f.size, type: f.name.endsWith('.py') ? 'python' : 'text', date: new Date().toISOString().slice(0,10), editable: true });
+    list.innerHTML += `<div style="display:flex;align-items:center;gap:.5rem;font-size:.78rem;padding:.35rem 0;color:var(--green)">✅ ${escHtml(f.name)} <span style="color:var(--muted2)">(${formatSize(f.size)})</span></div>`;
+  });
+  toast(`Uploaded ${files.length} file(s)`, 'ok');
+}
+
+// Drag drop
+const dz = document.getElementById('drop-zone');
+if (dz) {
+  dz.addEventListener('dragover', e => { e.preventDefault(); dz.classList.add('drag-over'); });
+  dz.addEventListener('dragleave', () => dz.classList.remove('drag-over'));
+  dz.addEventListener('drop', e => {
+    e.preventDefault(); dz.classList.remove('drag-over');
+    const dt = { files: e.dataTransfer.files };
+    handleFileSelect({ target: dt });
+  });
+}
+
+function formatSize(bytes) {
+  if (!bytes) return '0 B';
+  if (bytes < 1024) return bytes + ' B';
+  if (bytes < 1024*1024) return (bytes/1024).toFixed(1) + ' KB';
+  return (bytes/1024/1024).toFixed(1) + ' MB';
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// CODE EDITOR
+// ═══════════════════════════════════════════════════════════════════
+async function loadCodeEditor() {
+  if (!currentBotId) return;
+  try {
+    const res = await fetch(`/api/bot/${currentBotId}/code`);
+    const data = await res.json();
+    document.getElementById('code-editor').value = data.code || '';
+    document.getElementById('editor-filename').textContent = 'main.py';
+  } catch(e) {}
+}
+
+async function saveCode() {
+  if (!currentBotId) return;
+  const code = document.getElementById('code-editor').value;
+  try {
+    const res = await fetch(`/api/bot/${currentBotId}/edit`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ code })
+    });
+    const data = await res.json();
+    if (data.success) {
+      toast('File saved successfully', 'ok');
+    } else {
+      toast(data.error || 'Save failed', 'err');
+    }
+  } catch(e) { toast('Network error', 'err'); }
+}
+
+async function reloadCode() {
+  await loadCodeEditor();
+  toast('Code reloaded from server', 'info');
+}
+
+function openLintInfo() {
+  const code = document.getElementById('code-editor').value;
+  const lines = code.split('\n').length;
+  const funcs = (code.match(/^(async )?def /gm) || []).length;
+  toast(`${lines} lines · ${funcs} functions`, 'info');
+}
+
+// Tab key in editor
+document.getElementById('code-editor').addEventListener('keydown', e => {
+  if (e.key === 'Tab') {
+    e.preventDefault();
+    const el = e.target;
+    const start = el.selectionStart;
+    el.value = el.value.slice(0, start) + '    ' + el.value.slice(el.selectionEnd);
+    el.selectionStart = el.selectionEnd = start + 4;
+  }
+  // Ctrl+S to save
+  if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+    e.preventDefault();
+    saveCode();
+  }
+});
+
+// ═══════════════════════════════════════════════════════════════════
+// SETTINGS
+// ═══════════════════════════════════════════════════════════════════
+async function saveSettings() {
+  if (!currentBotId) return;
+  const name = document.getElementById('settings-name').value.trim();
+  const token = document.getElementById('settings-token').value.trim();
+  try {
+    const res = await fetch(`/api/bot/${currentBotId}/edit`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name, token })
+    });
+    const data = await res.json();
+    if (data.success) {
+      toast('Settings saved', 'ok');
+      document.getElementById('sv-bot-name').textContent = name;
+      currentBotName = name;
+      // Update sidebar
+      const sbEl = document.querySelector(`#sb-${currentBotId} .sb-bot-name`);
+      if (sbEl) sbEl.textContent = name;
+    } else {
+      toast(data.error || 'Failed', 'err');
+    }
+  } catch(e) { toast('Network error', 'err'); }
+}
+
+function deleteCurrentBot() {
+  if (!currentBotId) return;
+  confirmDelete(currentBotId, currentBotName, null);
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// ADD / EDIT BOT
+// ═══════════════════════════════════════════════════════════════════
+function openAddModal() {
+  isEditMode = false;
+  document.getElementById('modal-title').textContent = '🤖 New Bot Server';
+  document.getElementById('save-btn').textContent = 'Create Server';
+  document.getElementById('edit-bot-id').value = '';
+  document.getElementById('bot-name').value = '';
+  document.getElementById('bot-token').value = '';
+  document.getElementById('bot-code').value = TEMPLATES.echo;
+  document.getElementById('template-area').style.display = 'block';
+  document.getElementById('add-modal').classList.add('open');
+}
+
+function useTemplate(name) {
+  document.getElementById('bot-code').value = TEMPLATES[name] || '';
+  toast(`Template "${name}" applied`, 'info');
+}
+
+async function saveBot() {
+  const name = document.getElementById('bot-name').value.trim();
+  const token = document.getElementById('bot-token').value.trim();
+  const code = document.getElementById('bot-code').value.trim();
+  if (!name || !token || !code) { toast('All fields required', 'err'); return; }
+
+  const btn = document.getElementById('save-btn');
+  btn.disabled = true; btn.textContent = 'Creating…';
+
+  try {
+    const botId = document.getElementById('edit-bot-id').value;
+    const url = isEditMode ? `/api/bot/${botId}/edit` : '/api/bot/add';
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name, token, code })
+    });
+    const data = await res.json();
+    if (data.success) {
+      toast(isEditMode ? 'Bot updated!' : 'Bot server created!', 'ok');
+      closeModal('add-modal');
+      setTimeout(() => location.reload(), 700);
+    } else {
+      toast(data.error || 'Failed', 'err');
+    }
+  } catch(e) { toast('Network error', 'err'); }
+  finally { btn.disabled = false; btn.textContent = isEditMode ? 'Save Changes' : 'Create Server'; }
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// DASHBOARD BOT ACTIONS
+// ═══════════════════════════════════════════════════════════════════
+async function botAction(botId, action, event) {
+  if (event) event.stopPropagation();
+  try {
+    const res = await fetch(`/api/bot/${botId}/${action}`, { method: 'POST' });
+    const data = await res.json();
+    if (data.success) {
+      toast(`Bot ${action}${action.endsWith('t')?'te':''}d`, 'ok');
+      setTimeout(() => updateDashboardCards(), 900);
+    } else {
+      toast(data.error || `Failed to ${action}`, 'err');
+    }
+  } catch(e) { toast('Network error', 'err'); }
+}
+
+async function updateDashboardCards() {
+  try {
+    const res = await fetch('/api/bots/status');
+    const statuses = await res.json();
+    let running = 0;
+    for (const [id, status] of Object.entries(statuses)) {
+      const card = document.getElementById('card-' + id);
+      const sbEl = document.getElementById('sb-' + id);
+      if (card) {
+        card.classList.toggle('running-card', status === 'running');
+        const badge = card.querySelector('.bc-badge');
+        if (badge) { badge.className = `bc-badge ${status}`; badge.querySelector('span')?.remove(); badge.innerHTML = `<div class="bdot"></div>${status.charAt(0).toUpperCase()+status.slice(1)}`; }
+      }
+      if (sbEl) {
+        const dot = sbEl.querySelector('.sb-bot-dot');
+        const ico = sbEl.querySelector('.sb-bot-status');
+        if (dot) dot.className = `sb-bot-dot ${status}`;
+        if (ico) ico.textContent = status === 'running' ? '▶' : '⏹';
+        sbEl.classList.toggle('active', status === 'running');
+      }
+      if (status === 'running') running++;
+    }
+    const total = Object.keys(statuses).length;
+    const el = (id) => document.getElementById(id);
+    ['st-running','st-stopped','st-total','running-badge','total-badge'].forEach(id => {
+      const e = el(id);
+      if (e) {
+        if (id==='st-running') e.textContent = running;
+        if (id==='st-stopped') e.textContent = total-running;
+        if (id==='st-total') e.textContent = total;
+        if (id==='running-badge') e.textContent = `● ${running} Running`;
+        if (id==='total-badge') e.textContent = `${total} Total`;
+      }
+    });
+  } catch(e) {}
+}
+setInterval(updateDashboardCards, 6000);
+
+// ═══════════════════════════════════════════════════════════════════
+// DELETE
+// ═══════════════════════════════════════════════════════════════════
+function confirmDelete(botId, botName, event) {
+  if (event) event.stopPropagation();
+  deleteBotId = botId;
+  document.getElementById('confirm-name').textContent = `"${botName}"`;
+  document.getElementById('confirm-modal').classList.add('open');
+}
+
+async function doDelete() {
+  if (!deleteBotId) return;
+  try {
+    const res = await fetch(`/api/bot/${deleteBotId}/delete`, { method: 'POST' });
+    const data = await res.json();
+    if (data.success) {
+      toast('Server deleted', 'ok');
+      closeModal('confirm-modal');
+      if (currentBotId === deleteBotId) backToDashboard();
+      setTimeout(() => location.reload(), 700);
+    } else {
+      toast(data.error || 'Delete failed', 'err');
+    }
+  } catch(e) { toast('Network error', 'err'); }
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// MODALS
+// ═══════════════════════════════════════════════════════════════════
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+
+document.querySelectorAll('.overlay').forEach(overlay => {
+  overlay.addEventListener('click', e => {
+    if (e.target === overlay) overlay.classList.remove('open');
+  });
+});
+
+// ═══════════════════════════════════════════════════════════════════
+// TOAST
+// ═══════════════════════════════════════════════════════════════════
+function toast(msg, type='info') {
+  const icons = { ok:'✅', err:'❌', info:'ℹ️' };
+  const el = document.createElement('div');
+  el.className = `toast ${type}`;
+  el.innerHTML = `${icons[type]||''} ${escHtml(msg)}`;
+  document.getElementById('toasts').appendChild(el);
+  setTimeout(() => { el.style.opacity='0'; el.style.transform='translateX(20px)'; el.style.transition='.25s'; setTimeout(()=>el.remove(),250); }, 2800);
+}
+
+function escHtml(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// KEYBOARD SHORTCUTS
+// ═══════════════════════════════════════════════════════════════════
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') {
+    document.querySelectorAll('.overlay.open').forEach(m => m.classList.remove('open'));
+  }
+});
+</script>
+</body>
+</html>
